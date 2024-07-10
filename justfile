@@ -3,8 +3,9 @@ setup:
 
 build:
     meson compile -C builddir
+    meson install -C builddir 
 
 run:
-    ./builddir/src/magclust
+    ./builddir/bin/magclust
 
 clean-run: build run
