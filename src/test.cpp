@@ -1,3 +1,3 @@
 #include "common.h"
 
-int getResult() { return -1; }
+auto getResult() -> int { return -1; }
