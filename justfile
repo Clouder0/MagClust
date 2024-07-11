@@ -1,11 +1,10 @@
-setup:
-    meson setup builddir
-
 build:
-    meson compile -C builddir
-    meson install -C builddir 
+    xmake
 
 run:
-    ./builddir/bin/magclust
+    xmake run
+    
+clean:
+    xmake clean
 
-clean-run: build run
+clean-run: clean build run

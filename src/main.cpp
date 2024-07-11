@@ -2,7 +2,7 @@
 #include <cstdio>
 
 int main() {
-    puts("Hello meson again again again !");
-    printf("%d\n", getResult());
-    return 0;
+  puts("Hello meson again again again !");
+  printf("%d\n", getResult());
+  return 0;
 }
