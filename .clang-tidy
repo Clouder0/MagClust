@@ -164,8 +164,8 @@ CheckOptions:
   misc-header-include-cycle.IgnoredFilesList: ''
   misc-include-cleaner.DeduplicateFindings: 'true'
   misc-include-cleaner.IgnoreHeaders: ''
-  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'false'
-  misc-non-private-member-variables-in-classes.IgnorePublicMemberVariables: 'false'
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
+  misc-non-private-member-variables-in-classes.IgnorePublicMemberVariables: 'true'
   misc-throw-by-value-catch-by-reference.CheckThrowTemporaries: 'true'
   misc-throw-by-value-catch-by-reference.WarnOnLargeObjects: 'false'
   misc-uniqueptr-reset-release.IncludeStyle: llvm
