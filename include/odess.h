@@ -40,7 +40,7 @@ class Odess {
   std::default_random_engine random_engine_;
   std::array<int, feature_num> k_array_;
   std::array<int, feature_num> b_array_;
-  
+
   static constexpr uint8_t mask = gen_mask(sample_bits);
 
  public:
@@ -52,9 +52,9 @@ class Odess {
     constexpr uint64_t magic2l = 0x0000000000100000;
     constexpr uint64_t magic2r = 0x00000000ffffffff;
     const std::uniform_int_distribution<uint64_t>::param_type paramA(magic1l,
-                                                               magic1r);
+                                                                     magic1r);
     const std::uniform_int_distribution<uint64_t>::param_type paramB(magic2l,
-                                                               magic2r);
+                                                                     magic2r);
     distributionA.param(paramA);
     distributionB.param(paramB);
     for (size_t i = 0; i < feature_num; ++i) {
@@ -66,7 +66,7 @@ class Odess {
   auto genSuperFeatures(RawDataBlock const &blk)
       -> std::array<uint64_t, cluster_num> {
     std::array<uint32_t, feature_num> max_list_{};
-    for(auto &val : max_list_) { val = 0; }
+    for (auto &val : max_list_) { val = 0; }
     std::array<uint64_t, cluster_num> res{};
     uint64_t hash_value = 0;
     for (auto cur_byte : blk.data) {
@@ -75,7 +75,8 @@ class Odess {
           (hash_value << 1) + gearMatrix.at(static_cast<uint8_t>(cur_byte));
       if ((hash_value & mask) != 0) { continue; }
       for (size_t j = 0; j < feature_num; ++j) {
-        const uint32_t trans_res = (hash_value * k_array_.at(j) + b_array_.at(j));
+        const uint32_t trans_res =
+            (hash_value * k_array_.at(j) + b_array_.at(j));
         max_list_.at(j) = std::max(max_list_.at(j), trans_res);
       }
     }
@@ -83,12 +84,11 @@ class Odess {
     constexpr size_t cluster_size = feature_num / cluster_num;
     static_assert(feature_num % cluster_num == 0);
     constexpr uint64_t seed = 0x7fcaf1;
-    for(const auto &val : max_list_) { std::print("{},", val);
-}
+    for (const auto &val : max_list_) { std::print("{},", val); }
     std::print("\n");
     for (size_t i = 0; i < cluster_num; ++i) {
       res.at(i) = XXH64(max_list_.data() + i * cluster_size,
-                     sizeof(uint32_t) * cluster_size, seed);
+                        sizeof(uint32_t) * cluster_size, seed);
     }
     std::print("\n");
     return res;

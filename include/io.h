@@ -119,7 +119,8 @@ class IOHelper {
           reinterpret_cast<char *>(buffer_.data() + current_idx);  // NOLINT
       if (src.blknum >= bufferSize - (passed - start_idx)) {
         // partial read and end
-        const size_t bytes_to_read = (bufferSize - current_idx) * kDataBlockSize;
+        const size_t bytes_to_read =
+            (bufferSize - current_idx) * kDataBlockSize;
         src.ifs.read(start_ptr, bytes_to_read);
         return;  // READ CACHE DONE
       }
