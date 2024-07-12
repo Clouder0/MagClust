@@ -3,6 +3,8 @@
 #include "common.h"
 #include "model.h"
 
+#include <functional>
+
 struct RandomHelper {
   std::random_device r;
   std::default_random_engine e;
@@ -17,9 +19,19 @@ struct RandomHelper {
   }
 };
 
-void gen_file(std::filesystem::path const &path, size_t blknum);
+void gen_file_increment(std::filesystem::path const &path, size_t blknum);
+void gen_file_decrement(std::filesystem::path const &path, size_t blknum);
+
+void gen_file(std::filesystem::path const &path,
+              std::vector<RawDataBlock> const &blks);
 
 auto random_block() -> RawDataBlock;
+auto random_blocks(size_t blknum) -> std::vector<RawDataBlock>;
+auto gen_blocks(size_t blknum,
+                std::function<void(RawDataBlock &)> const &writer)
+    -> std::vector<RawDataBlock>;
+auto incre_blocks(size_t blknum) -> std::vector<RawDataBlock>;
+auto decre_blocks(size_t blknum) -> std::vector<RawDataBlock>;
 
 auto random_file(std::filesystem::path const &path,
                  size_t blknum) -> std::vector<RawDataBlock>;

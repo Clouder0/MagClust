@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 //
 // Copyright (c) 2019-2021 Kris Jusiak (kris at jusiak dot net)
 //
@@ -3344,3 +3345,4 @@ __attribute__((constructor(101))) inline void cmd_line_args(int argc,
 #endif
 
 #endif
+//NOLINTEND

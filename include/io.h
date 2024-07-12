@@ -70,7 +70,7 @@ class IOHelper {
     if (!checkCacheValid(idx, buffer_head_idx_, bufferSize)) {
       prepareCache(idx);
     }
-    return buffer_[idx - buffer_head_idx_];
+    return buffer_.at(idx - buffer_head_idx_);
   }
 
   [[nodiscard]] auto readBlocksBuffered(size_t begin_idx, size_t end_idx)
@@ -104,7 +104,7 @@ class IOHelper {
         size_t const bytes_to_read =
             std::min(kDataBlockSize * bufferSize,
                      src.size - kDataBlockSize * in_file_offset);
-        size_t read_blocks =
+        const size_t read_blocks =
             (bytes_to_read + kDataBlockSize - 1) / kDataBlockSize;
 
         char *start_ptr = reinterpret_cast<char *>(buffer_.data());  // NOLINT
@@ -119,7 +119,7 @@ class IOHelper {
           reinterpret_cast<char *>(buffer_.data() + current_idx);  // NOLINT
       if (src.blknum >= bufferSize - (passed - start_idx)) {
         // partial read and end
-        size_t bytes_to_read = (bufferSize - current_idx) * kDataBlockSize;
+        const size_t bytes_to_read = (bufferSize - current_idx) * kDataBlockSize;
         src.ifs.read(start_ptr, bytes_to_read);
         return;  // READ CACHE DONE
       }
@@ -150,8 +150,8 @@ class DataBlockIterator {
   using pointer = RawDataBlock *;
   using reference = RawDataBlock &;
 
-  DataBlockIterator(size_t blk_idx, gsl::not_null<IOHelper<bufferSize> *> io)
-      : blk_idx_(blk_idx), io_(io) {}
+  DataBlockIterator(size_t blk_idx, gsl::not_null<IOHelper<bufferSize> *> io_)
+      : blk_idx_(blk_idx), io_(io_) {}
 
   auto operator*() -> reference { return io_->readBlockBuffered(blk_idx_); }
   auto operator->() -> pointer { return io_->readBlockBuffered(blk_idx_); }

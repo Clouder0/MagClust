@@ -27,9 +27,10 @@ toolchain_end()
 
 set_languages("c++23")
 add_requires("microsoft-gsl", { alias = "gsl" })
+add_requires("xxhash")
 set_options("debugger", "lldb")
 set_toolchains("my-clang")
-add_packages("gsl")
+add_packages("gsl", "xxhash")
 set_pmxxheader("include/common.h")
 
 target("MagClust", function()
