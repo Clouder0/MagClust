@@ -12,7 +12,7 @@ ImplementationFileExtensions:
   - cc
   - cpp
   - cxx
-HeaderFilterRegex: ''
+HeaderFilterRegex: '^include/.*'
 FormatStyle:     none
 User:            clouder
 CheckOptions:
@@ -126,7 +126,7 @@ CheckOptions:
   cppcoreguidelines-no-malloc.Reallocations: '::realloc'
   cppcoreguidelines-no-suspend-with-lock.LockGuards: '::std::unique_lock;::std::scoped_lock;::std::shared_lock;::std::lock_guard'
   cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
-  cppcoreguidelines-non-private-member-variables-in-classes.IgnorePublicMemberVariables: 'false'
+  cppcoreguidelines-non-private-member-variables-in-classes.IgnorePublicMemberVariables: 'true'
   cppcoreguidelines-owning-memory.LegacyResourceConsumers: '::free;::realloc;::freopen;::fclose'
   cppcoreguidelines-owning-memory.LegacyResourceProducers: '::malloc;::aligned_alloc;::realloc;::calloc;::fopen;::freopen;::tmpfile'
   cppcoreguidelines-prefer-member-initializer.UseAssignment: 'false'
@@ -285,6 +285,7 @@ CheckOptions:
   readability-identifier-naming.GetConfigPerFile: 'true'
   readability-identifier-naming.IgnoreFailedSplit: 'false'
   readability-identifier-naming.IgnoreMainLikeFunctions: 'false'
+  readability-identifier-naming.PrivateMemberSuffix: '_'
   readability-implicit-bool-conversion.AllowIntegerConditions: 'false'
   readability-implicit-bool-conversion.AllowPointerConditions: 'false'
   readability-inconsistent-declaration-parameter-name.IgnoreMacros: 'true'

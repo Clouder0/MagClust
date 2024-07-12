@@ -1,4 +1,7 @@
-build:
+generate:
+    xmake project -k compile_commands
+
+build: generate
     xmake
 
 run: build
