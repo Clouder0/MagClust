@@ -1,57 +1,144 @@
+#include "common.h"
+#include "gsl/pointers"
 #include "model.h"
-#include <cstdint>
-#include <iterator>
-#include <fstream>
-#include <filesystem>
-#include <vector>
-#include <gsl/pointers>
-
-
-template<size_t bufferSize>
-class DataBlockIterator;
 
 constexpr size_t invalid_head_idx = UINT64_MAX;
-// IO layer for processing, support stream reading and indexing
-template<size_t bufferSize>
-class IOHelper {
-    struct FileInfo {
-        size_t size, blknum;
-        std::filesystem::path path;
-        std::ifstream ifs;
-        FileInfo(std::filesystem::path path);
-    };
-    size_t total_blks_{0};
-    std::vector<FileInfo> srcs_;
-    
-    static_assert(std::is_same_v<size_t, uint64_t>, "Ensure size_t is 64bit");
-    size_t buffer_head_idx_ = invalid_head_idx; // use max to indicate invalid
-    std::array<RawDataBlock, bufferSize> buffer_;
-    
-  public:
-    IOHelper(std::vector<std::filesystem::path> const &input_files);
-    IOHelper(IOHelper&&) = delete;
-    IOHelper(IOHelper const &) = delete;
-    auto operator=(IOHelper&&) -> IOHelper& = delete;
-    auto operator=(IOHelper const &) -> IOHelper& = delete;
-    ~IOHelper() = default;
-    
-    /// NOTICE: IO operation! expensive
-    [[nodiscard]] auto readBlock(size_t idx) -> RawDataBlock;
 
-    [[nodiscard]] auto readBlockBuffered(size_t idx) -> RawDataBlock;
-    
-    [[nodiscard]] auto readBlocksBuffered(size_t begin_idx, size_t end_idx) -> std::vector<RawDataBlock>;
-    
-    // generally, streamed buffered read should be used.
-  private:
-    friend class DataBlockIterator<bufferSize>;
-    void prepareCache(size_t start_idx);
-  public:
-    auto begin() -> DataBlockIterator<bufferSize>;
-    auto end() -> DataBlockIterator<bufferSize>;
+namespace {
+auto checkCacheValid(size_t idx, size_t start_idx, size_t cache_size) -> bool {
+  return start_idx != invalid_head_idx && idx >= start_idx &&
+         idx < start_idx + cache_size;
+}
+}  // namespace
+
+template <size_t bufferSize>
+class DataBlockIterator;
+
+// IO layer for processing, support stream reading and indexing
+template <size_t bufferSize>
+class IOHelper {
+  struct FileInfo {
+    std::filesystem::path path;
+    size_t size, blknum;
+    std::ifstream ifs;
+    FileInfo(const std::filesystem::path &path_)
+        : path(path_),
+          size(std::filesystem::file_size(path_)),
+          blknum(size / kDataBlockSize),
+          ifs(path_, std::ios::binary) {}
+  };
+  size_t total_blks_{0};
+  std::vector<FileInfo> srcs_;
+
+  static_assert(std::is_same_v<size_t, uint64_t>, "Ensure size_t is 64bit");
+  size_t buffer_head_idx_ = invalid_head_idx;  // use max to indicate invalid
+  std::array<RawDataBlock, bufferSize> buffer_;
+
+ public:
+  IOHelper(std::vector<std::filesystem::path> const &input_files) {
+    srcs_.reserve(input_files.size());
+    for (auto const &path : input_files) {
+      srcs_.emplace_back(path);
+      total_blks_ += srcs_.back().blknum;
+    }
+  }
+
+  IOHelper(IOHelper &&) = delete;
+  IOHelper(IOHelper const &) = delete;
+  auto operator=(IOHelper &&) -> IOHelper & = delete;
+  auto operator=(IOHelper const &) -> IOHelper & = delete;
+  ~IOHelper() = default;
+
+  /// NOTICE: IO operation! expensive
+  [[nodiscard]] auto readBlock(size_t idx) -> RawDataBlock {
+    // first find the correct source file the block belongs to
+    for (auto &src : srcs_) {
+      if (idx < src.blknum) {
+        // NOLINTNEXTLINE don't consider overflow
+        src.ifs.seekg(gsl::narrow_cast<std::streamoff>(idx) * kDataBlockSize);
+        RawDataBlock blk{};  // TODO: inspect initialization cost here
+        // NOLINTNEXTLINE damn std::byte aren't supported by filestream
+        src.ifs.read(reinterpret_cast<char *>(blk.data.data()), kDataBlockSize);
+        return blk;
+      }
+      idx -= src.blknum;
+    }
+    throw std::out_of_range("Block index out of range");
+  }
+
+  [[nodiscard]] auto readBlockBuffered(size_t idx) -> RawDataBlock & {
+    if (!checkCacheValid(idx, buffer_head_idx_, bufferSize)) {
+      prepareCache(idx);
+    }
+    return buffer_[idx - buffer_head_idx_];
+  }
+
+  [[nodiscard]] auto readBlocksBuffered(size_t begin_idx, size_t end_idx)
+      -> std::vector<gsl::not_null<RawDataBlock *>> {
+    if (!checkCacheValid(begin_idx, buffer_head_idx_, bufferSize)) {
+      prepareCache(begin_idx);
+    }
+    std::vector<gsl::not_null<RawDataBlock *>> result;
+    result.reserve(end_idx - begin_idx);
+    for (size_t i = begin_idx; i < end_idx; ++i) {
+      result.emplace_back(&buffer_[i - buffer_head_idx_]);
+    }
+    return result;
+  }
+
+  // generally, streamed buffered read should be used.
+ private:
+  friend class DataBlockIterator<bufferSize>;
+  void prepareCache(size_t start_idx) {
+    buffer_head_idx_ = start_idx;
+    size_t passed = 0;
+    for (FileInfo &src : srcs_) {
+      if (passed + src.blknum <= start_idx) {
+        passed += src.blknum;
+        continue;
+      }
+      // start reading
+      if (passed < start_idx) {
+        auto in_file_offset = start_idx - passed;
+        src.ifs.seekg(in_file_offset * kDataBlockSize);
+        size_t const bytes_to_read =
+            std::min(kDataBlockSize * bufferSize,
+                     src.size - kDataBlockSize * in_file_offset);
+        size_t read_blocks =
+            (bytes_to_read + kDataBlockSize - 1) / kDataBlockSize;
+
+        char *start_ptr = reinterpret_cast<char *>(buffer_.data());  // NOLINT
+        src.ifs.read(start_ptr, bytes_to_read);
+        if (read_blocks == bufferSize) { return; }
+        passed += read_blocks;
+        continue;
+      }
+      src.ifs.seekg(0);
+      auto current_idx = passed - start_idx;
+      char *start_ptr =
+          reinterpret_cast<char *>(buffer_.data() + current_idx);  // NOLINT
+      if (src.blknum >= bufferSize - (passed - start_idx)) {
+        // partial read and end
+        size_t bytes_to_read = (bufferSize - current_idx) * kDataBlockSize;
+        src.ifs.read(start_ptr, bytes_to_read);
+        return;  // READ CACHE DONE
+      }
+      // read whole file
+      src.ifs.read(start_ptr, src.size);
+      passed += src.blknum;
+    }
+  }
+
+ public:
+  auto begin() -> DataBlockIterator<bufferSize> {
+    return DataBlockIterator<bufferSize>{0, this};
+  }
+  auto end() -> DataBlockIterator<bufferSize> {
+    return DataBlockIterator<bufferSize>{total_blks_, this};
+  }
 };
 
-template<size_t bufferSize>
+template <size_t bufferSize>
 class DataBlockIterator {
  private:
   size_t blk_idx_;
@@ -63,9 +150,23 @@ class DataBlockIterator {
   using pointer = RawDataBlock *;
   using reference = RawDataBlock &;
 
-  auto operator*() -> reference;
-  auto operator->() -> pointer;
-  auto operator++() -> DataBlockIterator<bufferSize>&;
-  friend auto operator==(const DataBlockIterator<bufferSize> &lhs, const DataBlockIterator<bufferSize> &rhs) -> bool;
-  friend auto operator!=(const DataBlockIterator<bufferSize> &lhs, const DataBlockIterator<bufferSize> &rhs) -> bool;
+  DataBlockIterator(size_t blk_idx, gsl::not_null<IOHelper<bufferSize> *> io)
+      : blk_idx_(blk_idx), io_(io) {}
+
+  auto operator*() -> reference { return io_->readBlockBuffered(blk_idx_); }
+  auto operator->() -> pointer { return io_->readBlockBuffered(blk_idx_); }
+  auto operator++() -> DataBlockIterator<bufferSize> & {
+    ++blk_idx_;
+    return *this;
+  }
+  friend auto operator==(const DataBlockIterator<bufferSize> &lhs,
+                         const DataBlockIterator<bufferSize> &rhs) -> bool {
+    return lhs.blk_idx_ == rhs.blk_idx_;
+  }
+  friend auto operator!=(const DataBlockIterator<bufferSize> &lhs,
+                         const DataBlockIterator<bufferSize> &rhs) -> bool {
+    return lhs.blk_idx_ != rhs.blk_idx_;
+  }
 };
+
+constexpr size_t kBufferSize = 7;  // 1024*4KB = 4MB

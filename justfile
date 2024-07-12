@@ -24,3 +24,6 @@ check:
     
 fix:
     xmake check clang.tidy --fix
+
+test:
+    xmake test -v -r

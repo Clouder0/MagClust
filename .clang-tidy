@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,modernize-*,performance-*,readability-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,misc-*,portability-*'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,modernize-*,performance-*,readability-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,misc-*,portability-*, -misc-include-cleaner, -cppcoreguidelines-pro-type-reinterpret-cast'
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''
@@ -162,8 +162,6 @@ CheckOptions:
   misc-definitions-in-headers.HeaderFileExtensions: ';h;hh;hpp;hxx'
   misc-definitions-in-headers.UseHeaderFileExtension: 'true'
   misc-header-include-cycle.IgnoredFilesList: ''
-  misc-include-cleaner.DeduplicateFindings: 'true'
-  misc-include-cleaner.IgnoreHeaders: ''
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
   misc-non-private-member-variables-in-classes.IgnorePublicMemberVariables: 'true'
   misc-throw-by-value-catch-by-reference.CheckThrowTemporaries: 'true'

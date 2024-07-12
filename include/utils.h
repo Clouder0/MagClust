@@ -1,5 +1,6 @@
+#include "common.h"
+
 // NOLINTBEGIN
-#include <array>
 using size_t = decltype(sizeof(0));
 
 #pragma pack(push, 1)
@@ -9,7 +10,7 @@ template <class T, class U, T U::*M, class B, size_t N>
 union member_at<M, B, N> {
   std::array<char, sizeof(B)> data;
   struct {
-    std::array<char,N> at;
+    std::array<char, N> at;
     T member;
   };
   B parent;
@@ -36,11 +37,11 @@ constexpr auto find_offset_of() -> size_t {
 template <auto M, class B = decltype(member_at<M, int, 1>::base)>
 constexpr size_t as_offset = find_offset_of<M, B>();
 
+template <class T, size_t alignment>
+constexpr size_t aligned_sizeof_base =
+    (sizeof(T) + alignment - 1) & ~(alignment - 1);
 
-template<class T, size_t alignment>
-constexpr size_t aligned_sizeof_base = (sizeof(T) + alignment - 1) & ~(alignment - 1);
-
-template<class T>
+template <class T>
 constexpr size_t aligned_sizeof = aligned_sizeof_base<T, alignof(T)>;
 
 // NOLINTEND
