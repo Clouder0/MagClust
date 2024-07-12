@@ -184,7 +184,7 @@ void totally_different() {
     };
     auto same_times = 0;
     constexpr auto test_times = 10000;
-    constexpr auto dif_num = 10;
+    constexpr auto dif_num = 100;
     for(int i = 0; i < test_times;++i) {
       same_times += test_similarity(dif_num);
     }

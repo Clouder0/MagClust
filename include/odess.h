@@ -59,7 +59,7 @@ class Odess {
     distributionB.param(paramB);
     for (size_t i = 0; i < feature_num; ++i) {
       k_array_.at(i) = distributionA(random_engine_);
-      b_array_.at(i) = distributionA(random_engine_);
+      b_array_.at(i) = distributionB(random_engine_);
     }
   }
 
