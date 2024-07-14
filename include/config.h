@@ -2,7 +2,7 @@
 
 // Config Helper
 struct Config {
-  std::vector<std::filesystem::path> paths;
+  std::vector<std::string> paths;
 };
 
-auto readConfigFromFile(std::filesystem::path const &path) -> Config;
+auto readConfigFromFile(std::string const &path) -> Config;

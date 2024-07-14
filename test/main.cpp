@@ -31,7 +31,7 @@ void sequence_readblock() {
     constexpr size_t kTestBlocks = 4197;
     auto path = random_path();
     gen_file_increment(path, kTestBlocks);
-    const std::vector<std::filesystem::path> paths{path};
+    const std::vector<std::string> paths{path};
     IOHelper<kBufferSize> helper(paths);
     for (size_t i = 0; i < kTestBlocks; ++i) {
       auto blk = helper.readBlock(i);
@@ -45,7 +45,7 @@ void sequence_readblock_buffered() {
     constexpr size_t kTestBlocks = 4197;
     auto path = random_path();
     gen_file_increment(path, kTestBlocks);
-    const std::vector<std::filesystem::path> paths{path};
+    const std::vector<std::string> paths{path};
     IOHelper<kBufferSize> helper(paths);
     for (size_t i = 0; i < kTestBlocks; ++i) {
       auto blk = helper.readBlockBuffered(i);
@@ -61,7 +61,7 @@ void multiple_files() {
     auto path2 = random_path();
     auto blks1 = random_file(path1, kTestBlocks);
     auto blks2 = random_file(path2, kTestBlocks);
-    const std::vector<std::filesystem::path> paths{path1, path2};
+    const std::vector<std::string> paths{path1, path2};
     IOHelper<kBufferSize> helper(paths);
     for (auto const &[idx, blk] : helper) {
       if (idx < kTestBlocks) {
@@ -78,7 +78,7 @@ void sequence_random_read() {
     constexpr size_t kTestBlocks = 1025;
     auto path = random_path();
     auto blks = random_file(path, kTestBlocks);
-    const std::vector<std::filesystem::path> paths{path};
+    const std::vector<std::string> paths{path};
     IOHelper<kBufferSize> helper(paths);
     for (size_t i = 0; i < kTestBlocks; ++i) {
       auto blk = helper.readBlock(i);
@@ -100,7 +100,7 @@ void range_based_forloop() {
     constexpr size_t kTestBlocks = 1025;
     auto path = random_path();
     auto blks = random_file(path, kTestBlocks);
-    const std::vector<std::filesystem::path> paths{path};
+    const std::vector<std::string> paths{path};
     IOHelper<kBufferSize> helper(paths);
     for (auto const &[idx, blk] : helper) { compare_block(blk, blks[idx]); }
   };

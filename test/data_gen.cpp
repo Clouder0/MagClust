@@ -1,7 +1,6 @@
 #include "data_gen.h"
 
 #include <cstdint>
-#include <filesystem>
 #include <functional>
 #include <vector>
 
@@ -52,19 +51,19 @@ auto decre_blocks(size_t blknum) -> std::vector<RawDataBlock> {
   });
 }
 
-void gen_file_increment(std::filesystem::path const &path, size_t blknum) {
-  std::print("generating file to {}\n", path.string());
+void gen_file_increment(std::string const &path, size_t blknum) {
+  std::print("generating file to {}\n", path);
   gen_file(path, incre_blocks(blknum));
 }
 
-void gen_file_decrement(std::filesystem::path const &path, size_t blknum) {
-  std::print("generating file to {}\n", path.string());
+void gen_file_decrement(std::string const &path, size_t blknum) {
+  std::print("generating file to {}\n", path);
   gen_file(path, decre_blocks(blknum));
 }
 
-void gen_file(std::filesystem::path const &path,
+void gen_file(std::string const &path,
               std::vector<RawDataBlock> const &blks) {
-  std::print("generating file to {}\n", path.string());
+  std::print("generating file to {}\n", path);
   std::ofstream ofs(path, std::ios::binary | std::ios::out);
   for (auto const &blk : blks) {
     ofs.write(reinterpret_cast<const char *>(blk.data.data()), kDataBlockSize);
@@ -73,9 +72,9 @@ void gen_file(std::filesystem::path const &path,
   ofs.close();
 }
 
-auto random_file(std::filesystem::path const &path,
+auto random_file(std::string const &path,
                  size_t blknum) -> std::vector<RawDataBlock> {
-  std::print("generating file to {}\n", path.string());
+  std::print("generating file to {}\n", path);
   std::vector<RawDataBlock> blks;
   blks.reserve(blknum);
   for (size_t i = 0; i < blknum; ++i) { blks.emplace_back(random_block()); }
@@ -83,10 +82,8 @@ auto random_file(std::filesystem::path const &path,
   return blks;
 }
 
-auto random_path() -> std::filesystem::path {
+auto random_path() -> std::string {
   static auto randomHelper = RandomHelper();
-  auto path = std::filesystem::temp_directory_path() / "magclust_test" /
-              std::to_string(randomHelper.nextUInt64());
-  std::filesystem::create_directory(path.parent_path());
+  auto path = "/tmp/magclust_test/" + std::to_string(randomHelper.nextUInt64());
   return path;
 }

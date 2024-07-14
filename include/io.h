@@ -18,12 +18,12 @@ class DataBlockIterator;
 template <size_t bufferSize>
 class IOHelper {
   struct FileInfo {
-    std::filesystem::path path;
+    std::string path;
     size_t size, blknum;
     std::ifstream ifs;
-    FileInfo(const std::filesystem::path &path_)
+    FileInfo(const std::string &path_)
         : path(path_),
-          size(std::filesystem::file_size(path_)),
+          size(filesize(path_)),
           blknum(size / kDataBlockSize),
           ifs(path_, std::ios::binary) {}
   };
@@ -35,7 +35,7 @@ class IOHelper {
   std::array<RawDataBlock, bufferSize> buffer_;
 
  public:
-  IOHelper(std::vector<std::filesystem::path> const &input_files) {
+  IOHelper(std::vector<std::string> const &input_files) {
     srcs_.reserve(input_files.size());
     for (auto const &path : input_files) {
       srcs_.emplace_back(path);

@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <exception>
-#include <filesystem>
 #include <format>
 #include <fstream>
 #include <gsl/pointers>

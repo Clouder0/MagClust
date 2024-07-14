@@ -18,10 +18,10 @@ struct RandomHelper {
   }
 };
 
-void gen_file_increment(std::filesystem::path const &path, size_t blknum);
-void gen_file_decrement(std::filesystem::path const &path, size_t blknum);
+void gen_file_increment(std::string const &path, size_t blknum);
+void gen_file_decrement(std::string const &path, size_t blknum);
 
-void gen_file(std::filesystem::path const &path,
+void gen_file(std::string const &path,
               std::vector<RawDataBlock> const &blks);
 
 auto random_block() -> RawDataBlock;
@@ -32,7 +32,7 @@ auto gen_blocks(size_t blknum,
 auto incre_blocks(size_t blknum) -> std::vector<RawDataBlock>;
 auto decre_blocks(size_t blknum) -> std::vector<RawDataBlock>;
 
-auto random_file(std::filesystem::path const &path,
+auto random_file(std::string const &path,
                  size_t blknum) -> std::vector<RawDataBlock>;
 
-auto random_path() -> std::filesystem::path;
+auto random_path() -> std::string;

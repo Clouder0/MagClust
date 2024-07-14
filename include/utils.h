@@ -1,5 +1,10 @@
 #include "common.h"
 
+inline auto filesize(std::string const &filename) -> std::ifstream::pos_type
+{
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg(); 
+}
 // NOLINTBEGIN
 using size_t = decltype(sizeof(0));
 

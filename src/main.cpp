@@ -62,7 +62,7 @@ auto main(int argc, char* argv[]) -> int {
     std::cout << std::format("Config file: {}\n", argv[1]);
     auto config = readConfigFromFile(argv[1]);
     for (auto const& path : config.paths) {
-      std::cout << std::format("Path: {}\n", path.string());
+      std::cout << std::format("Path: {}\n", path);
     }
 
     auto io_helper = std::make_unique<IOHelper<kBufferSize>>(config.paths);
