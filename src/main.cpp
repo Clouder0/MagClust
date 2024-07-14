@@ -135,7 +135,7 @@ auto main(int argc, char* argv[]) -> int {
             }
           });
       now_thread_begin = now_thread_end;
-      now_thread_end = (t == (thread_num - 1)) ? io_helper->totalBlocks()
+      now_thread_end = (t == (thread_num - 2)) ? io_helper->totalBlocks()
                                                : now_thread_end + per_thread;
     }
 
@@ -189,7 +189,7 @@ auto main(int argc, char* argv[]) -> int {
         }
       });
       now_thread_begin = now_thread_end;
-      now_thread_end = (t == (thread_num - 1)) ? zipblocks.size()
+      now_thread_end = (t == (thread_num - 2)) ? zipblocks.size()
                                                : now_thread_end + per_thread;
     }
 

@@ -1,6 +1,2 @@
-/tmp/magclust_test/10788807183215754265
-/tmp/magclust_test/1101683961117416217
-/tmp/magclust_test/16515774059732101345
-/tmp/magclust_test/291878769637639324
-/tmp/magclust_test/3444885780500238812
-/tmp/magclust_test/4827292023061223196
+/home/clouder/MagClust/test0.bin
+/home/clouder/MagClust/test1.bin
