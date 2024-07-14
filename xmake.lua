@@ -66,6 +66,7 @@ end
 set_policy("build.merge_archive", true)
 add_packages("gsl", "xxhash")
 set_pmxxheader("include/common.h")
+add_syslinks("pthread")
 
 
 
