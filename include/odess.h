@@ -32,7 +32,8 @@ consteval auto gen_mask(size_t sample_bits) -> uint8_t {
   return 0;
 }
 
-template <size_t feature_num, size_t cluster_num, size_t sample_bits>
+template <size_t feature_num, size_t cluster_num, size_t sample_bits,
+          size_t hash_shift>
 class Odess {
   static_assert(sample_bits <= 8, "sample bits cannot exceed 8");
 
@@ -71,8 +72,8 @@ class Odess {
     uint64_t hash_value = 0;
     for (auto cur_byte : blk.data) {
       // std::print("{}", static_cast<uint32_t>(cur_byte));
-      hash_value =
-          (hash_value << 1) + gearMatrix.at(static_cast<uint8_t>(cur_byte));
+      hash_value = (hash_value << hash_shift) +
+                   gearMatrix.at(static_cast<uint8_t>(cur_byte));
       if ((hash_value & mask) != 0) { continue; }
       for (size_t j = 0; j < feature_num; ++j) {
         const uint32_t trans_res =
@@ -84,13 +85,12 @@ class Odess {
     constexpr size_t cluster_size = feature_num / cluster_num;
     static_assert(feature_num % cluster_num == 0);
     constexpr uint64_t seed = 0x7fcaf1;
-    for (const auto &val : max_list_) { std::print("{},", val); }
-    std::print("\n");
+    // for (const auto &val : max_list_) { std::print("{},", val); }
+    // std::print("\n");
     for (size_t i = 0; i < cluster_num; ++i) {
       res.at(i) = XXH64(max_list_.data() + i * cluster_size,
                         sizeof(uint32_t) * cluster_size, seed);
     }
-    std::print("\n");
     return res;
   }
 };

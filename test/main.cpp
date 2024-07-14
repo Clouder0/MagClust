@@ -1,4 +1,5 @@
 #include <sys/types.h>
+
 #include <cstring>
 
 #include "common.h"
@@ -62,14 +63,12 @@ void multiple_files() {
     auto blks2 = random_file(path2, kTestBlocks);
     const std::vector<std::filesystem::path> paths{path1, path2};
     IOHelper<kBufferSize> helper(paths);
-    size_t idx = 0;
-    for (auto const &blk : helper) {
+    for (auto const &[idx, blk] : helper) {
       if (idx < kTestBlocks) {
         compare_block(blk, blks1[idx]);
       } else {
         compare_block(blk, blks2[idx - kTestBlocks]);
       }
-      idx++;
     }
   };
 }
@@ -103,11 +102,7 @@ void range_based_forloop() {
     auto blks = random_file(path, kTestBlocks);
     const std::vector<std::filesystem::path> paths{path};
     IOHelper<kBufferSize> helper(paths);
-    size_t idx = 0;
-    for (auto const &blk : helper) {
-      compare_block(blk, blks[idx]);
-      idx++;
-    }
+    for (auto const &[idx, blk] : helper) { compare_block(blk, blks[idx]); }
   };
 }
 
@@ -124,9 +119,10 @@ void IO_tests() {
 
 namespace SF_TEST {
 void totally_different() {
-  constexpr size_t feature_num = 16;
-  constexpr size_t cluster_num = 16;
+  constexpr size_t feature_num = 12;
+  constexpr size_t cluster_num = 4;
   constexpr size_t sample_bits = 7;
+  constexpr size_t hash_shift = 8;
   "totally_different"_test = [] {
     RawDataBlock blk1{};
     RawDataBlock blk2{};
@@ -135,10 +131,10 @@ void totally_different() {
       *reinterpret_cast<uint8_t *>(blk2.data.data() + i) =
           UINT8_MAX - (i % UINT8_MAX);
     }
-    Odess<feature_num,cluster_num,sample_bits> odess; // NOLINT
+    Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;  // NOLINT
     auto sf1 = odess.genSuperFeatures(blk1);
     auto sf2 = odess.genSuperFeatures(blk2);
-    for(size_t i = 0; i < cluster_num; ++i) {
+    for (size_t i = 0; i < cluster_num; ++i) {
       expect(neq(sf1.at(i), sf2.at(i)));
     }
   };
@@ -150,10 +146,10 @@ void totally_different() {
       *reinterpret_cast<uint8_t *>(blk1.data.data() + i) = i % UINT8_MAX;
       *reinterpret_cast<uint8_t *>(blk2.data.data() + i) = i % UINT8_MAX;
     }
-    Odess<feature_num,cluster_num, sample_bits> odess; // NOLINT
+    Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;  // NOLINT
     auto sf1 = odess.genSuperFeatures(blk1);
     auto sf2 = odess.genSuperFeatures(blk2);
-    for(size_t i = 0; i < cluster_num; ++i) {
+    for (size_t i = 0; i < cluster_num; ++i) {
       expect(eq(sf1.at(i), sf2.at(i)));
     }
   };
@@ -168,35 +164,38 @@ void totally_different() {
             randomHelper.nextByte();
       }
 
-      Odess<feature_num, cluster_num, sample_bits> odess;  // NOLINT
+      Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;
       auto sf1 = odess.genSuperFeatures(blk1);
       auto sf2 = odess.genSuperFeatures(blk2);
       // for (size_t i = 0; i < cluster_num; ++i) {
-        // std::print("{}:{}\n", sf1.at(i), sf2.at(i));
+      // std::print("{}:{}\n", sf1.at(i), sf2.at(i));
       // }
-      std::print("bit diff: {}/{}\n", diff_bits(blk1, blk2), kDataBlockSize * 8);
+      std::print("bit diff: {}/{}\n", diff_bits(blk1, blk2),
+                 kDataBlockSize * 8);
       auto same_feature = 0;
       for (size_t i = 0; i < cluster_num; ++i) {
-        same_feature += static_cast<int>(sf1.at(i) == sf2.at(i));
+        if (sf1.at(i) == sf2.at(i)) {
+          ++same_feature;
+          break;
+        }
       }
       std::print("same SF: {}\n", same_feature);
       return same_feature;
     };
     auto same_times = 0;
     constexpr auto test_times = 10000;
-    constexpr auto dif_num = 100;
-    for(int i = 0; i < test_times;++i) {
+    constexpr auto dif_num = 200;
+    for (int i = 0; i < test_times; ++i) {
       same_times += test_similarity(dif_num);
     }
-    std::print("avg {}/4096 modified feature equal rate: {}/{}, {}%\n", dif_num, same_times, test_times * feature_num, 1.0 * same_times / test_times / feature_num * 100);
+    std::print("avg {}/4096 modified feature equal rate: {}/{}, {}%\n", dif_num,
+               same_times, test_times, 1.0 * same_times / test_times * 100);
   };
 }
 void sf_tests() {
-  const suite<"Odess"> odess = []{
-    totally_different();
-  };
+  const suite<"Odess"> odess = [] { totally_different(); };
 }
-}
+}  // namespace SF_TEST
 
 auto main() -> int {
   IOTEST::IO_tests();

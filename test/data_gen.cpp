@@ -24,10 +24,15 @@ auto random_blocks(size_t blknum) -> std::vector<RawDataBlock> {
   return blks;
 }
 
-auto gen_blocks(size_t blknum, std::function<void(RawDataBlock&)> const &writer) -> std::vector<RawDataBlock> {
+auto gen_blocks(size_t blknum,
+                std::function<void(RawDataBlock &)> const &writer)
+    -> std::vector<RawDataBlock> {
   std::vector<RawDataBlock> blks;
   blks.reserve(blknum);
-  for (size_t i = 0; i < blknum; ++i) { blks.emplace_back(); writer(blks.back());}
+  for (size_t i = 0; i < blknum; ++i) {
+    blks.emplace_back();
+    writer(blks.back());
+  }
   return blks;
 }
 

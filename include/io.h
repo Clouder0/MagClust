@@ -56,8 +56,7 @@ class IOHelper {
       if (idx < src.blknum) {
         // NOLINTNEXTLINE don't consider overflow
         src.ifs.seekg(gsl::narrow_cast<std::streamoff>(idx) * kDataBlockSize);
-        RawDataBlock blk{};  // TODO: inspect initialization cost here
-        // NOLINTNEXTLINE damn std::byte aren't supported by filestream
+        RawDataBlock blk;  // TODO: inspect initialization cost here
         src.ifs.read(reinterpret_cast<char *>(blk.data.data()), kDataBlockSize);
         return blk;
       }
@@ -85,6 +84,8 @@ class IOHelper {
     }
     return result;
   }
+
+  [[nodiscard]] auto totalBlocks() -> size_t { return total_blks_; }
 
   // generally, streamed buffered read should be used.
  private:
@@ -147,15 +148,16 @@ class DataBlockIterator {
 
  public:
   using iterator_catetory = std::input_iterator_tag;
-  using value_type = RawDataBlock;
-  using pointer = RawDataBlock *;
-  using reference = RawDataBlock &;
+  using value_type = std::tuple<size_t, RawDataBlock &>;
+  // using reference = std::tuple<size_t, RawDataBlock &>;
 
   DataBlockIterator(size_t blk_idx, gsl::not_null<IOHelper<bufferSize> *> io_)
       : blk_idx_(blk_idx), io_(io_) {}
 
-  auto operator*() -> reference { return io_->readBlockBuffered(blk_idx_); }
-  auto operator->() -> pointer { return io_->readBlockBuffered(blk_idx_); }
+  auto operator*() -> value_type {
+    return std::make_tuple(blk_idx_,
+                           std::ref(io_->readBlockBuffered(blk_idx_)));
+  }
   auto operator++() -> DataBlockIterator<bufferSize> & {
     ++blk_idx_;
     return *this;

@@ -1,9 +1,8 @@
+#include <functional>
 #include <random>
 
 #include "common.h"
 #include "model.h"
-
-#include <functional>
 
 struct RandomHelper {
   std::random_device r;

@@ -28,10 +28,46 @@ toolchain_end()
 set_languages("c++23")
 add_requires("microsoft-gsl", { alias = "gsl" })
 add_requires("xxhash")
+add_cxxflags("-stdlib=libstdc++")
 set_options("debugger", "lldb")
 set_toolchains("my-clang")
+
+-- 如果当前编译模式是debug
+if is_mode("debug") then
+    -- 添加DEBUG编译宏
+    add_defines("DEBUG")
+    -- 启用调试符号
+    set_symbols("debug")
+    -- 禁用优化
+    set_optimize("none")
+end
+
+-- 如果是release或者profile模式
+if is_mode("release", "profile") then
+    -- 如果是release模式
+    if is_mode("release") then
+        -- 隐藏符号
+        set_symbols("hidden")
+        -- strip所有符号
+        set_strip("all")
+        -- 忽略帧指针
+        add_cxflags("-fomit-frame-pointer")
+        add_mxflags("-fomit-frame-pointer")
+    -- 如果是profile模式
+    else
+        -- 启用调试符号
+        set_symbols("debug")
+    end
+
+    -- 添加扩展指令集
+    add_vectorexts("sse2", "sse3", "ssse3", "avx2", "avx512")
+end
+
+set_policy("build.merge_archive", true)
 add_packages("gsl", "xxhash")
 set_pmxxheader("include/common.h")
+
+
 
 target("MagClust", function()
     set_kind("binary")
