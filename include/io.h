@@ -14,6 +14,9 @@ auto checkCacheValid(size_t idx, size_t start_idx, size_t cache_size) -> bool {
 template <size_t bufferSize>
 class DataBlockIterator;
 
+template <size_t bufferSize>
+struct RangedIteratorHelper;
+
 // IO layer for processing, support stream reading and indexing
 template <size_t bufferSize>
 class IOHelper {
@@ -137,8 +140,11 @@ class IOHelper {
     return DataBlockIterator<bufferSize>{0, this};
   }
   auto end() -> DataBlockIterator<bufferSize> {
-    printf("total blocks %lu\n", total_blks_);
     return DataBlockIterator<bufferSize>{total_blks_, this};
+  }
+
+  auto ranged(size_t begin, size_t end) {
+    return RangedIteratorHelper<bufferSize>{begin, end, this};
   }
 };
 
@@ -174,4 +180,20 @@ class DataBlockIterator {
   }
 };
 
-constexpr size_t kBufferSize = 7;  // 1024*4KB = 4MB
+template <size_t bufferSize>
+struct RangedIteratorHelper {
+  size_t begin_idx, end_idx;
+  gsl::not_null<IOHelper<bufferSize> *> io_;
+  auto begin() -> DataBlockIterator<bufferSize> {
+    return DataBlockIterator<bufferSize>{begin_idx, io_};
+  }
+  auto end() -> DataBlockIterator<bufferSize> {
+    return DataBlockIterator<bufferSize>{end_idx, io_};
+  }
+
+  RangedIteratorHelper(size_t begin, size_t end,
+                       gsl::not_null<IOHelper<bufferSize> *> io)
+      : begin_idx(begin), end_idx(end), io_(io) {}
+};
+
+constexpr size_t kBufferSize = 1024;  // 1024*4KB = 4MB

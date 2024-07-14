@@ -82,13 +82,40 @@ auto main(int argc, char* argv[]) -> int {
     constexpr size_t hash_shift = 8;
     Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;
     std::map<uint64_t, std::vector<size_t>> sf2blk;
-    for (auto const& [idx, blk] : *io_helper) {
-      auto sf = odess.genSuperFeatures(blk);
-      for (auto const& f : sf) { sf2blk[f].emplace_back(idx); }
-      if (idx % 100 == 0) {
-        std::cout << idx << "/" << io_helper->totalBlocks()
-                  << " th block feature calculated.\n";
-      }
+    // multithread here to accelerate
+    constexpr size_t thread_num = 64;
+    size_t per_thread = io_helper->totalBlocks() / thread_num;
+    size_t now_thread_begin = 0;
+    size_t now_thread_end = per_thread;
+    std::vector<std::thread> threads;
+    std::vector<DataBlock<cluster_num>> all_blocks;
+    all_blocks.resize(io_helper->totalBlocks());
+    for (size_t t = 0; t < thread_num; ++t) {
+      threads.emplace_back(
+          [now_thread_begin, now_thread_end, &all_blocks, &config, &odess]() {
+            auto my_io_helper =
+                std::make_unique<IOHelper<kBufferSize>>(config.paths);
+            for (auto const& [idx, raw] :
+                 my_io_helper->ranged(now_thread_begin, now_thread_end)) {
+              auto& blk = all_blocks.at(idx);
+              blk.idx = idx;
+              blk.features_ = odess.genSuperFeatures(raw);
+              if (idx % 100 == 0) {
+                std::cout << "Thread " << std::this_thread::get_id()
+                          << " processed " << idx - now_thread_begin << "/"
+                          << now_thread_end - now_thread_begin << "\n";
+              }
+            }
+          });
+      now_thread_begin = now_thread_end;
+      now_thread_end = (t == (thread_num - 1)) ? io_helper->totalBlocks()
+                                               : now_thread_end + per_thread;
+    }
+
+    for (size_t t = 0; t < thread_num; ++t) { threads[t].join(); }
+
+    for (auto const& blk : all_blocks) {
+      for (auto const& f : blk.features_) { sf2blk[f].emplace_back(blk.idx); }
     }
 
     auto zipblocks = aggregate(io_helper->totalBlocks(), sf2blk);
@@ -111,13 +138,11 @@ auto main(int argc, char* argv[]) -> int {
         }
       }
 
-      if (zip_idx % 100 == 0) {
-        std::cout << zip_idx << "/" << zipblocks.size()
-                  << " th zipblock avg diff bits: "
-                  << (diff / zipblock.blks.size() * (zipblock.blks.size() - 1) /
-                      2)
-                  << "\n";
-      }
+      std::cout << zip_idx << "/" << zipblocks.size()
+                << " th zipblock avg diff bits: "
+                << (diff / zipblock.blks.size() * (zipblock.blks.size() - 1) /
+                    2)
+                << "\n";
       zip_diff.emplace_back(diff / zipblock.blks.size() *
                             (zipblock.blks.size() - 1) / 2);
       ++zip_idx;

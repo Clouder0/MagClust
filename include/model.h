@@ -18,6 +18,12 @@ struct ZipBlock {
   ZipBlock(std::vector<size_t>&& blks_) : blks(std::move(blks_)) {}
 };
 
+template <size_t cluster_num>
+struct DataBlock {
+  uint64_t idx;
+  std::array<uint64_t, cluster_num> features_;
+};
+
 /*
 class DataBlockMemoryChecker {
   // [0,8): idx

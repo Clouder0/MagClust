@@ -3,6 +3,7 @@
 // NOLINTBEGIN
 #include <array>
 #include <cstddef>
+#include <thread>
 #include <cstdint>
 #include <cstdio>
 #include <exception>
