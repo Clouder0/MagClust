@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-constexpr auto gearMatrix = std::to_array<uint64_t>({
+constexpr auto gearMatrix = std::array<uint64_t,256>({
     0xb088d3a9e840f559, 0x5652c7f739ed20d6, 0x45b28969898972ab,
     0x6b0a89d5b68ec777, 0x368f573e8b7a31b7, 0x1dc636dce936d94b,
     0x207a4c4e5554d5b6, 0xa474b34628239acb, 0x3b06a83e1ca3b912,

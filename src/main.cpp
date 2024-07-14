@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include "common.h"
 #include "config.h"
 #include "io.h"
@@ -22,11 +24,16 @@ void describe(std::vector<T> const& values) {
   }
 }
 
+inline static auto popcount(uint64_t x) -> size_t {
+  size_t res = 0;
+  while (x > 0) { res += x & 1, x >>= 1; }
+  return res;
+}
+
 auto diff_bits(RawDataBlock const& lhs, RawDataBlock const& rhs) -> size_t {
   size_t diff = 0;
   for (size_t i = 0; i < kDataBlockSize; ++i) {
-    diff +=
-        std::popcount(static_cast<uint8_t>(lhs.data.at(i) ^ rhs.data.at(i)));
+    diff += popcount(static_cast<uint8_t>(lhs.data.at(i) ^ rhs.data.at(i)));
   }
   return diff;
 }
@@ -63,7 +70,7 @@ auto main(int argc, char* argv[]) -> int {
     std::cout << "Config file: " << argv[1] << "\n";
     auto config = readConfigFromFile(argv[1]);
     for (auto const& path : config.paths) {
-      std::cout << std::format("Path: {}\n", path);
+      std::cout << "Path: " << path << "\n";
     }
 
     auto io_helper = std::make_unique<IOHelper<kBufferSize>>(config.paths);
