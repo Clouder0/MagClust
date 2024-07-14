@@ -3,6 +3,8 @@
 // NOLINTBEGIN
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <algorithm>
 #include <thread>
 #include <cstdint>
 #include <cstdio>

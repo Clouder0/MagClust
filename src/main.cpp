@@ -1,5 +1,3 @@
-#include <cstdint>
-
 #include "common.h"
 #include "config.h"
 #include "io.h"
@@ -18,8 +16,8 @@ void describe(std::vector<T> const& values) {
   std::cout << "num: " << V.size() << ", sum: " << sum << ", avg: " << avg
             << "\n";
   // P5,P10,....P95
-  for (size_t i = 0; i <= 95; i += 5) {
-    size_t idx = V.size() * i / 100;
+  for (size_t i = 0; i <= 100; i += 5) {
+    size_t idx = (V.size() - 1) * i / 100;
     std::cout << "P" << i << ": " << V.at(idx) << "\n";
   }
 }
@@ -36,6 +34,30 @@ auto diff_bits(RawDataBlock const& lhs, RawDataBlock const& rhs) -> size_t {
     diff += popcount(static_cast<uint8_t>(lhs.data.at(i) ^ rhs.data.at(i)));
   }
   return diff;
+}
+
+auto aggregate_compare(size_t total_blks,
+                       std::map<uint64_t, std::vector<size_t>> const& sf2blk) {
+  std::vector<uint64_t> all_blocks;
+  for (auto const& [sf, blks] : sf2blk) {
+    for (auto const& blk : blks) { all_blocks.emplace_back(blk); }
+  }
+  // random shuffle
+  std::shuffle(all_blocks.begin(), all_blocks.end(),
+               std::mt19937(std::random_device()()));
+  // divide to zipblocks
+  std::vector<ZipBlock> zipblocks;
+  std::vector<size_t> pending;
+  pending.reserve(kBlockPerZip);
+  for (auto const& blk : all_blocks) {
+    pending.emplace_back(blk);
+    if (pending.size() >= kBlockPerZip) {
+      zipblocks.emplace_back(pending);
+      pending.clear();
+    }
+  }
+  if (pending.size() > 0) { zipblocks.emplace_back(std::move(pending)); }
+  return zipblocks;
 }
 
 auto aggregate(size_t total_blks,
