@@ -39,8 +39,14 @@ auto diff_bits(RawDataBlock const& lhs, RawDataBlock const& rhs) -> size_t {
 auto aggregate_compare(size_t total_blks,
                        std::map<uint64_t, std::vector<size_t>> const& sf2blk) {
   std::vector<uint64_t> all_blocks;
+  std::vector<bool> blk_used;
+  blk_used.resize(total_blks);
   for (auto const& [sf, blks] : sf2blk) {
-    for (auto const& blk : blks) { all_blocks.emplace_back(blk); }
+    for (auto const& blk : blks) { 
+      if(blk_used.at(blk)) { continue; }
+      all_blocks.emplace_back(blk);
+      blk_used.at(blk) = true;
+    }
   }
   // random shuffle
   std::shuffle(all_blocks.begin(), all_blocks.end(),
