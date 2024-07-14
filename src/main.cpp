@@ -13,11 +13,12 @@ void describe(std::vector<T> const& values) {
   T sum = 0;
   for (auto const& v : V) { sum += v; }
   T avg = sum / V.size();
-  std::cout << std::format("num: {}, sum: {}, avg: {}\n", V.size(), sum, avg);
+  std::cout << "num: " << V.size() << ", sum: " << sum << ", avg: " << avg
+            << "\n";
   // P5,P10,....P95
   for (size_t i = 5; i <= 95; i += 5) {
     size_t idx = V.size() * i / 100;
-    std::cout << std::format("P{}: {}\n", i, V.at(idx));
+    std::cout << "P" << i << ": " << V.at(idx) << "\n";
   }
 }
 
@@ -56,10 +57,10 @@ auto aggregate(size_t total_blks,
 auto main(int argc, char* argv[]) -> int {
   try {
     if (argc < 2) {
-      std::cout << std::format("Usage: {} <config file>\n", argv[0]);
+      std::cout << "Usage: " << argv[0] << " <config file>\n";
       return 0;
     }
-    std::cout << std::format("Config file: {}\n", argv[1]);
+    std::cout << "Config file: " << argv[1] << "\n";
     auto config = readConfigFromFile(argv[1]);
     for (auto const& path : config.paths) {
       std::cout << std::format("Path: {}\n", path);
@@ -99,9 +100,11 @@ auto main(int argc, char* argv[]) -> int {
       }
 
       if (zip_idx % 100 == 0) {
-        std::cout << std::format(
-            "{}/{} th zipblock avg diff bits: {}\n", zip_idx, zipblocks.size(),
-            diff / zipblock.blks.size() * (zipblock.blks.size() - 1) / 2);
+        std::cout << zip_idx << "/" << zipblocks.size()
+                  << " th zipblock avg diff bits: "
+                  << (diff / zipblock.blks.size() * (zipblock.blks.size() - 1) /
+                      2)
+                  << "\n";
       }
       zip_diff.emplace_back(diff / zipblock.blks.size() *
                             (zipblock.blks.size() - 1) / 2);
