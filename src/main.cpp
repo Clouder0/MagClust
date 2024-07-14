@@ -42,8 +42,8 @@ auto aggregate_compare(size_t total_blks,
   std::vector<bool> blk_used;
   blk_used.resize(total_blks);
   for (auto const& [sf, blks] : sf2blk) {
-    for (auto const& blk : blks) { 
-      if(blk_used.at(blk)) { continue; }
+    for (auto const& blk : blks) {
+      if (blk_used.at(blk)) { continue; }
       all_blocks.emplace_back(blk);
       blk_used.at(blk) = true;
     }
@@ -164,17 +164,21 @@ auto main(int argc, char* argv[]) -> int {
                             &zip_diff, &config]() {
         auto my_io_helper =
             std::make_unique<IOHelper<kBufferSize>>(config.paths);
+        std::vector<RawDataBlock> blks;
         for (size_t i = now_thread_begin; i < now_thread_end; ++i) {
           auto& zipblock = zipblocks.at(i);
           size_t diff = 0;
+          blks.reserve(zipblock.blks.size());
+          for (auto blk : zipblock.blks) {
+            blks.emplace_back(my_io_helper->readBlock(blk));
+          }
           for (size_t k = 1; k < zipblock.blks.size(); ++k) {
             for (size_t j = 0; j < k; ++j) {
-              auto current_dif =
-                  diff_bits(my_io_helper->readBlock(zipblock.blks.at(k)),
-                            my_io_helper->readBlock(zipblock.blks.at(j)));
+              auto current_dif = diff_bits(blks.at(k), blks.at(j));
               diff += current_dif;
             }
           }
+          blks.clear();
           auto avg_diff =
               diff / zipblock.blks.size() / (zipblock.blks.size() - 1) * 2;
           zip_diff.at(i) = avg_diff;
