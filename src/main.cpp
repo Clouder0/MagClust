@@ -105,8 +105,8 @@ auto main(int argc, char* argv[]) -> int {
 
     constexpr size_t feature_num = 12;
     constexpr size_t cluster_num = 4;
-    constexpr size_t sample_bits = 7;
-    constexpr size_t hash_shift = 8;
+    constexpr size_t sample_bits = 8;
+    constexpr size_t hash_shift = 16;
     Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;
     std::map<uint64_t, std::vector<size_t>> sf2blk;
     // multithread here to accelerate
