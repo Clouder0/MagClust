@@ -60,7 +60,7 @@ if is_mode("release", "profile") then
     end
 
     -- 添加扩展指令集
-    -- add_vectorexts("sse2", "sse3", "ssse3", "avx2", "avx512")
+    add_vectorexts("sse2", "sse3", "ssse3", "avx2", "avx512")
 end
 
 set_policy("build.merge_archive", true)
