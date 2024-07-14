@@ -18,7 +18,7 @@ void describe(std::vector<T> const& values) {
   std::cout << "num: " << V.size() << ", sum: " << sum << ", avg: " << avg
             << "\n";
   // P5,P10,....P95
-  for (size_t i = 5; i <= 95; i += 5) {
+  for (size_t i = 0; i <= 95; i += 5) {
     size_t idx = V.size() * i / 100;
     std::cout << "P" << i << ": " << V.at(idx) << "\n";
   }
@@ -148,7 +148,7 @@ auto main(int argc, char* argv[]) -> int {
             }
           }
           auto avg_diff =
-              diff / zipblock.blks.size() * (zipblock.blks.size() - 1) / 2;
+              diff / zipblock.blks.size() / (zipblock.blks.size() - 1) * 2;
           zip_diff.at(i) = avg_diff;
           std::cout << std::to_string(i - now_thread_begin) + "/" +
                            std::to_string(now_thread_end - now_thread_begin) +
