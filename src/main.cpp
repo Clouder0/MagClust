@@ -83,9 +83,12 @@ auto main(int argc, char* argv[]) -> int {
     Odess<feature_num, cluster_num, sample_bits, hash_shift> odess;
     std::map<uint64_t, std::vector<size_t>> sf2blk;
     for (auto const& [idx, blk] : *io_helper) {
-      printf("idx %lu\n", idx);
       auto sf = odess.genSuperFeatures(blk);
       for (auto const& f : sf) { sf2blk[f].emplace_back(idx); }
+      if (idx % 100 == 0) {
+        std::cout << idx << "/" << io_helper->totalBlocks()
+                  << " th block feature calculated.\n";
+      }
     }
 
     auto zipblocks = aggregate(io_helper->totalBlocks(), sf2blk);
