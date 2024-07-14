@@ -24,7 +24,8 @@ class IOHelper {
     FileInfo(const std::string &path_)
         : path(path_),
           size(filesize(path_)),
-          blknum(size / kDataBlockSize),
+          blknum((static_cast<size_t>(filesize(path_)) + kDataBlockSize - 1) /
+                 kDataBlockSize),
           ifs(path_, std::ios::binary) {}
   };
   size_t total_blks_{0};
@@ -56,7 +57,7 @@ class IOHelper {
       if (idx < src.blknum) {
         // NOLINTNEXTLINE don't consider overflow
         src.ifs.seekg(gsl::narrow_cast<std::streamoff>(idx) * kDataBlockSize);
-        RawDataBlock blk;  // TODO: inspect initialization cost here
+        RawDataBlock blk{};  // TODO: inspect initialization cost here
         src.ifs.read(reinterpret_cast<char *>(blk.data.data()), kDataBlockSize);
         return blk;
       }
@@ -136,6 +137,7 @@ class IOHelper {
     return DataBlockIterator<bufferSize>{0, this};
   }
   auto end() -> DataBlockIterator<bufferSize> {
+    printf("total blocks %lu\n", total_blks_);
     return DataBlockIterator<bufferSize>{total_blks_, this};
   }
 };
