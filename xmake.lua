@@ -29,7 +29,7 @@ set_languages("c++23")
 add_requires("microsoft-gsl", { alias = "gsl" })
 add_requires("xxhash")
 add_cxxflags("-stdlib=libstdc++")
-set_options("debugger", "lldb")
+set_options("debugger", "gdb")
 set_toolchains("my-clang")
 
 -- 如果当前编译模式是debug
@@ -60,7 +60,7 @@ if is_mode("release", "profile") then
     end
 
     -- 添加扩展指令集
-    add_vectorexts("sse2", "sse3", "ssse3", "avx2", "avx512")
+    -- add_vectorexts("sse2", "sse3", "ssse3", "avx2", "avx512")
 end
 
 set_policy("build.merge_archive", true)

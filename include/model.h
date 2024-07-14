@@ -16,6 +16,7 @@ struct ZipBlock {
   std::vector<size_t> blks;
   ZipBlock() { blks.reserve(kBlockPerZip); }
   ZipBlock(std::vector<size_t>&& blks_) : blks(std::move(blks_)) {}
+  ZipBlock(std::vector<size_t>const & blks_) : blks(blks_) {}
 };
 
 template <size_t cluster_num>

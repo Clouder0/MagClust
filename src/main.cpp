@@ -41,19 +41,18 @@ auto diff_bits(RawDataBlock const& lhs, RawDataBlock const& rhs) -> size_t {
 auto aggregate(size_t total_blks,
                std::map<uint64_t, std::vector<size_t>> const& sf2blk) {
   std::vector<bool> blk_used;
-  blk_used.reserve(total_blks);
+  blk_used.resize(total_blks);
 
   std::vector<ZipBlock> zipblocks;
   std::vector<size_t> pending;
-  pending.reserve(kBlockPerZip);
+  // pending.reserve(kBlockPerZip);
   for (auto const& [sf, blks] : sf2blk) {
     for (auto const& blk : blks) {
-      if (blk_used[blk]) { continue; }
-      blk_used[blk] = true;
+      if (blk_used.at(blk)) { continue; }
+      blk_used.at(blk) = true;
       pending.emplace_back(blk);
       if (pending.size() >= kBlockPerZip) {
-        zipblocks.emplace_back(std::move(pending));
-        pending.reserve(kBlockPerZip);
+        zipblocks.emplace_back(pending);
         pending.clear();
       }
     }
@@ -101,9 +100,9 @@ auto main(int argc, char* argv[]) -> int {
               blk.idx = idx;
               blk.features_ = odess.genSuperFeatures(raw);
               if (idx % 100 == 0) {
-                std::cout << "Thread " << std::this_thread::get_id()
-                          << " processed " << idx - now_thread_begin << "/"
-                          << now_thread_end - now_thread_begin << "\n";
+                std::cout << " processed [" + std::to_string(now_thread_begin) +
+                                 "," + std::to_string(idx) + "," +
+                                 std::to_string(now_thread_end) + "]\n";
               }
             }
           });
@@ -114,40 +113,57 @@ auto main(int argc, char* argv[]) -> int {
 
     for (size_t t = 0; t < thread_num; ++t) { threads[t].join(); }
 
+    std::cout << "Done feature calculating.\n";
+
     for (auto const& blk : all_blocks) {
       for (auto const& f : blk.features_) { sf2blk[f].emplace_back(blk.idx); }
     }
 
+    std::cout << "Done feature mapping.\n";
+
     auto zipblocks = aggregate(io_helper->totalBlocks(), sf2blk);
 
-    auto zip_idx = 0;
     std::cout << "Zipblocks result:";
     std::vector<uint64_t> zip_diff;
-    zip_diff.reserve(zipblocks.size());
-    for (auto const& zipblock : zipblocks) {
-      // for(auto const &blk : zipblock.blks) {
-      // std::print("{},", blk);
-      // }
-      size_t diff = 0;
-      for (size_t i = 1; i < zipblock.blks.size(); ++i) {
-        for (size_t j = 0; j < i; ++j) {
-          auto current_dif =
-              diff_bits(io_helper->readBlock(zipblock.blks.at(i)),
-                        io_helper->readBlock(zipblock.blks.at(j)));
-          diff += current_dif;
-        }
-      }
+    zip_diff.resize(zipblocks.size());
+    threads.clear();
+    per_thread = zipblocks.size() / thread_num;
+    now_thread_begin = 0;
+    now_thread_end = per_thread;
 
-      std::cout << zip_idx << "/" << zipblocks.size()
-                << " th zipblock avg diff bits: "
-                << (diff / zipblock.blks.size() * (zipblock.blks.size() - 1) /
-                    2)
-                << "\n";
-      zip_diff.emplace_back(diff / zipblock.blks.size() *
-                            (zipblock.blks.size() - 1) / 2);
-      ++zip_idx;
+    for (size_t t = 0; t < thread_num; ++t) {
+      threads.emplace_back([now_thread_begin, now_thread_end, &zipblocks,
+                            &zip_diff, &config]() {
+        auto my_io_helper =
+            std::make_unique<IOHelper<kBufferSize>>(config.paths);
+        for (size_t i = now_thread_begin; i < now_thread_end; ++i) {
+          auto& zipblock = zipblocks.at(i);
+          size_t diff = 0;
+          for (size_t k = 1; k < zipblock.blks.size(); ++k) {
+            for (size_t j = 0; j < k; ++j) {
+              auto current_dif =
+                  diff_bits(my_io_helper->readBlock(zipblock.blks.at(k)),
+                            my_io_helper->readBlock(zipblock.blks.at(j)));
+              diff += current_dif;
+            }
+          }
+          auto avg_diff =
+              diff / zipblock.blks.size() * (zipblock.blks.size() - 1) / 2;
+          zip_diff.at(i) = avg_diff;
+          std::cout << std::to_string(i - now_thread_begin) + "/" +
+                           std::to_string(now_thread_end - now_thread_begin) +
+                           " processed, diff bits:" + std::to_string(avg_diff) +
+                           "\n";
+        }
+      });
+      now_thread_begin = now_thread_end;
+      now_thread_end = (t == (thread_num - 1)) ? zipblocks.size()
+                                               : now_thread_end + per_thread;
     }
 
+    for (size_t t = 0; t < thread_num; ++t) { threads[t].join(); }
+
+    std::cout << "Done.\n";
     describe(zip_diff);
 
   } catch (const std::exception& e) { std::cerr << e.what() << '\n'; }
